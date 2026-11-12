@@ -38,7 +38,7 @@ async def async_setup_entry(
 def _pcm_to_wav(data: bytes, metadata: stt.SpeechMetadata) -> bytes:
     buffer = io.BytesIO()
     with wave.open(buffer, "wb") as wav:
-        wav.setnchannels(int(metadata.channels))
+        wav.setnchannels(int(metadata.channel))
         wav.setsampwidth(int(metadata.bit_rate) // 8)
         wav.setframerate(int(metadata.sample_rate))
         wav.writeframes(data)

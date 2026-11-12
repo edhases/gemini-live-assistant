@@ -38,8 +38,17 @@
           "tts_voice": "TTS voice"
         },
         "data_description": {
-          "llm_hass_api": "Expose Home Assistant tools (Assist) so Gemini can control devices.",
-          "enable_live": "Prepare the Gemini Live realtime module (used by a custom voice pipeline)."
+          "chat_model": "Text model used by the conversation agent for chat and for the Assist voice pipeline (STT -> model -> TTS). Each request is independent.",
+          "prompt": "System instructions for the assistant. The default asks it to fetch only the device/area it needs via GetLiveContext.",
+          "llm_hass_api": "Expose Home Assistant tools (Assist) so Gemini can control devices and read states.",
+          "temperature": "Creativity of the text model (0 = deterministic, 2 = very creative).",
+          "max_tokens": "Maximum number of tokens in the model answer.",
+          "enable_live": "EXPERIMENTAL: enables the realtime Gemini Live module. It is NOT used by the standard Assist dialog; it needs a custom audio client that keeps a WebSocket session open, like a phone call.",
+          "live_model": "Realtime audio model used only by the Live module (not by the text conversation agent).",
+          "live_voice": "Voice used by the Live module.",
+          "stt_model": "Speech-to-text model used by the Assist pipeline to turn your voice into text.",
+          "tts_model": "Text-to-speech model used by the Assist pipeline to speak the answer.",
+          "tts_voice": "Voice used for text-to-speech (e.g. Puck, Kore, Charon)."
         }
       }
     }
