@@ -38,9 +38,9 @@ async def async_setup_entry(
 def _pcm_to_wav(data: bytes, metadata: stt.SpeechMetadata) -> bytes:
     buffer = io.BytesIO()
     with wave.open(buffer, "wb") as wav:
-        wav.setnchannels(metadata.channels)
-        wav.setsampwidth(metadata.bit_rate // 8)
-        wav.setframerate(metadata.sample_rate)
+        wav.setnchannels(int(metadata.channels))
+        wav.setsampwidth(int(metadata.bit_rate) // 8)
+        wav.setframerate(int(metadata.sample_rate))
         wav.writeframes(data)
     return buffer.getvalue()
 
@@ -93,19 +93,19 @@ class GeminiSTTEntity(stt.SpeechToTextEntity):
 
     async def async_process_audio_stream(
         self, metadata: stt.SpeechMetadata, stream: stt.AudioStream
-    ) -> stt.SpeechToTextResult:
+    ) -> stt.SpeechResult:
         audio = bytearray()
         async for chunk in stream:
             audio.extend(chunk)
 
         data = bytes(audio)
-        mime = _MIME_BY_FORMAT.get(metadata.format)
-        if mime is None:
-            if metadata.codec == stt.AudioCodecs.PCM:
-                data = _pcm_to_wav(data, metadata)
-                mime = "audio/wav"
-            else:
-                mime = "audio/wav"
+        if metadata.codec == stt.AudioCodecs.PCM:
+            # The Assist pipeline streams raw PCM, so always add a WAV header
+            # even when the format is advertised as WAV.
+            data = _pcm_to_wav(data, metadata)
+            mime = "audio/wav"
+        else:
+            mime = _MIME_BY_FORMAT.get(metadata.format, "audio/ogg")
 
         try:
             response = await self._client.aio.models.generate_content(
@@ -120,7 +120,14 @@ class GeminiSTTEntity(stt.SpeechToTextEntity):
             LOGGER.error("Gemini STT request failed: %s", err)
             raise HomeAssistantError("Gemini STT request failed") from err
 
-        text = (response.text or "").strip()
+        text = ""
+        if response.candidates and response.candidates[0].content:
+            for part in response.candidates[0].content.parts or []:
+                if part.audio_transcription and part.audio_transcription.text:
+                    text += part.audio_transcription.text
+        if not text:
+            text = (response.text or "").strip()
+
         return stt.SpeechResult(
             text=text,
             language=metadata.language,
