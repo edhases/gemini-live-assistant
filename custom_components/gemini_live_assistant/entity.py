@@ -8,6 +8,7 @@ from typing import Any, cast
 
 import probatio
 from google.genai import Client
+from google.genai import types as genai_types
 from google.genai.errors import APIError, ClientError
 from google.genai.types import (
     AutomaticFunctionCallingConfig,
@@ -29,12 +30,15 @@ from homeassistant.helpers.entity import Entity
 
 from .const import (
     CONF_CHAT_MODEL,
+    CONF_LIVE_MODEL,
+    CONF_LIVE_VOICE,
     CONF_MAX_TOKENS,
     CONF_TEMPERATURE,
     DOMAIN,
     LOGGER,
     MAX_TOOL_ITERATIONS,
     RECOMMENDED_CHAT_MODEL,
+    RECOMMENDED_LIVE_MODEL,
     RECOMMENDED_MAX_TOKENS,
     RECOMMENDED_TEMPERATURE,
 )
@@ -323,3 +327,95 @@ class GeminiLLMBaseEntity(Entity):
             )
             if not chat_log.unresponded_tool_results:
                 break
+
+    async def _async_handle_live_chat_log(self, chat_log: conversation.ChatLog) -> None:
+        """Run one request/response turn through the Gemini Live API.
+
+        A short-lived WebSocket session is opened, the user text is sent, tool
+        calls are executed, the spoken answer is collected from the output
+        transcript, and the session is closed. This uses the Live model quotas
+        (unlimited requests on the free tier) instead of the text model.
+        """
+        tools: list[genai_types.Tool] | None = None
+        if chat_log.llm_api:
+            tools = [
+                _format_tool(tool, chat_log.llm_api.custom_serializer)
+                for tool in chat_log.llm_api.tools
+            ]
+
+        prompt = chat_log.content[0].content or ""
+        user_message = chat_log.content[-1]
+        if not isinstance(user_message, conversation.UserContent):
+            raise HomeAssistantError("Invalid user message")
+        user_text = user_message.content or ""
+
+        model = self.options.get(CONF_LIVE_MODEL, RECOMMENDED_LIVE_MODEL)
+        voice = self.options.get(CONF_LIVE_VOICE, "Puck")
+        config = genai_types.LiveConnectConfig(
+            response_modalities=["AUDIO"],
+            system_instruction=prompt or None,
+            tools=tools or None,
+            speech_config=genai_types.SpeechConfig(
+                voice_config=genai_types.VoiceConfig(
+                    prebuilt_voice_config=genai_types.PrebuiltVoiceConfig(voice_name=voice)
+                )
+            ),
+            input_audio_transcription=genai_types.AudioTranscriptionConfig(),
+            output_audio_transcription=genai_types.AudioTranscriptionConfig(),
+        )
+
+        text = ""
+        try:
+            async with self._client.aio.live.connect(model=model, config=config) as session:
+                await session.send_client_content(
+                    turns=genai_types.Content(
+                        role="user",
+                        parts=[genai_types.Part.from_text(text=user_text)],
+                    ),
+                    turn_complete=True,
+                )
+                stream = session.receive()
+                while True:
+                    message = await stream.__anext__()
+                    if message.tool_call:
+                        if chat_log.llm_api is None:
+                            raise HomeAssistantError("No LLM API configured")
+                        responses = []
+                        for call in message.tool_call.function_calls or []:
+                            tool_input = llm.ToolInput(
+                                tool_name=call.name or "",
+                                tool_args=dict(call.args or {}),
+                            )
+                            result = await chat_log.llm_api.async_call_tool(tool_input)
+                            payload = (
+                                {"result": result.data}
+                                if not result.error
+                                else {"error": str(result.data)}
+                            )
+                            responses.append(
+                                genai_types.FunctionResponse(
+                                    name=call.name,
+                                    id=call.id,
+                                    response=payload,
+                                )
+                            )
+                        await session.send_tool_response(function_responses=responses)
+                        continue
+                    if message.server_content:
+                        if (
+                            message.server_content.output_transcription
+                            and message.server_content.output_transcription.text
+                        ):
+                            text += message.server_content.output_transcription.text
+                        if message.server_content.turn_complete:
+                            break
+        except (APIError, ClientError, ValueError, StopAsyncIteration) as err:
+            LOGGER.error("Gemini Live request failed: %s", err)
+            raise HomeAssistantError(ERROR_GETTING_RESPONSE) from err
+
+        chat_log.async_add_assistant_content_without_tools(
+            conversation.AssistantContent(
+                agent_id=self.entity_id,
+                content=text.strip() or "Готово.",
+            )
+        )

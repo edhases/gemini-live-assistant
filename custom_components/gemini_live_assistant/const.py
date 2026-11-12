@@ -28,7 +28,8 @@ CONF_LIVE_VOICE = "live_voice"
 RECOMMENDED_CHAT_MODEL = "models/gemini-3.5-flash-lite"
 RECOMMENDED_STT_MODEL = "models/gemini-3.5-flash-lite"
 RECOMMENDED_TTS_MODEL = "models/gemini-3.8-flash-tts"
-RECOMMENDED_LIVE_MODEL = "models/gemini-3.8-live"
+# The native-audio Live model reliably continues after tool responses.
+RECOMMENDED_LIVE_MODEL = "models/gemini-2.5-flash-native-audio-preview-12-2025"
 
 # Curated fallbacks. The options flow also queries the live model list from
 # the Gemini API and always allows typing a custom model name.
@@ -64,10 +65,10 @@ TTS_MODELS = [
 ]
 
 LIVE_MODELS = [
+    "models/gemini-2.5-flash-native-audio-preview-12-2025",
     "models/gemini-3.8-live",
     "models/gemini-3.8-live-extended-thinking",
     "models/gemini-3.1-flash-live-preview",
-    "models/gemini-2.5-flash-native-audio-preview-12-2025",
 ]
 
 VOICES = [

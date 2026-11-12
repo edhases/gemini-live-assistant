@@ -11,7 +11,7 @@ from homeassistant.const import CONF_LLM_HASS_API, CONF_PROMPT, MATCH_ALL
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN, LOGGER
+from .const import CONF_ENABLE_LIVE, DOMAIN, LOGGER
 from .entity import GeminiLLMBaseEntity
 
 
@@ -76,7 +76,10 @@ class GeminiConversationEntity(
         except conversation.ConverseError as err:
             return err.as_conversation_result()
 
-        await self._async_handle_chat_log(chat_log)
+        if options.get(CONF_ENABLE_LIVE):
+            await self._async_handle_live_chat_log(chat_log)
+        else:
+            await self._async_handle_chat_log(chat_log)
 
         # Defensive: the frontend expects a plain string as the assistant
         # speech. Coerce non-string content so it never renders as
