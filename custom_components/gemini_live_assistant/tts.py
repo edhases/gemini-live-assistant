@@ -48,8 +48,8 @@ def _pcm_to_wav(data: bytes, sample_rate: int = 24000) -> bytes:
 class GeminiTTSEntity(tts.TextToSpeechEntity):
     """Gemini text-to-speech entity."""
 
-    _attr_has_entity_name = False
-    _attr_name = "Gemini TTS"
+    _attr_has_entity_name = True
+    _attr_translation_key = "gemini_tts"
 
     def __init__(self, entry: ConfigEntry) -> None:
         self.entry = entry

@@ -217,18 +217,16 @@ class GeminiLLMBaseEntity(Entity):
         self,
         entry: ConfigEntry,
         client: Client,
-        name: str,
         unique_id: str,
         options: dict[str, Any] | None = None,
     ) -> None:
         self.entry = entry
         self._client = client
-        self._attr_name = name
         self._attr_unique_id = unique_id
         self.options = dict(options or {})
         self._attr_device_info = dr.DeviceInfo(
             identifiers={(DOMAIN, unique_id)},
-            name=name,
+            translation_key="gemini_live_assistant",
             manufacturer="Google",
             model=self.options.get(CONF_CHAT_MODEL, RECOMMENDED_CHAT_MODEL).split("/")[-1],
             entry_type=dr.DeviceEntryType.SERVICE,

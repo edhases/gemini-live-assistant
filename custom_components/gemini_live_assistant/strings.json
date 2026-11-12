@@ -53,15 +53,20 @@
       }
     }
   },
+  "device": {
+    "gemini_live_assistant": {
+      "name": "Gemini Live Assistant"
+    }
+  },
   "entity": {
     "conversation": {
       "gemini_live_assistant": { "name": "Gemini Live Assistant" }
     },
     "stt": {
-      "gemini_live_assistant": { "name": "Gemini STT" }
+      "gemini_stt": { "name": "Gemini STT" }
     },
     "tts": {
-      "gemini_live_assistant": { "name": "Gemini TTS" }
+      "gemini_tts": { "name": "Gemini TTS" }
     }
   }
 }

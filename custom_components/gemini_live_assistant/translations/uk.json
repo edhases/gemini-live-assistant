@@ -53,15 +53,20 @@
       }
     }
   },
+  "device": {
+    "gemini_live_assistant": {
+      "name": "Асистент Gemini Live"
+    }
+  },
   "entity": {
     "conversation": {
-      "gemini_live_assistant": { "name": "Gemini Live Assistant" }
+      "gemini_live_assistant": { "name": "Асистент Gemini Live" }
     },
     "stt": {
-      "gemini_live_assistant": { "name": "Gemini STT" }
+      "gemini_stt": { "name": "Розпізнавання мовлення Gemini" }
     },
     "tts": {
-      "gemini_live_assistant": { "name": "Gemini TTS" }
+      "gemini_tts": { "name": "Синтез мовлення Gemini" }
     }
   }
 }

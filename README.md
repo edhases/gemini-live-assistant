@@ -44,6 +44,15 @@ module implements the Gemini Live API (BidiGenerateContent) with audio in/out,
 transcripts and tool calls. It is a ready building block for a custom
 frontend/pipeline; wiring it into a fully hands-free HA voice loop is planned.
 
+## Translations
+
+UI strings and entity names live in
+`custom_components/gemini_live_assistant/translations/`. English (`en.json`) is
+the reference. To add a language, copy `en.json` to `translations/<code>.json`
+(for example `de.json`), translate the values, and restart Home Assistant. The
+integration loads the file that matches the Home Assistant language, falling
+back to English for any missing key.
+
 ## Security
 
 The API key is stored only in the Home Assistant config entry. No secrets are committed to this repository.

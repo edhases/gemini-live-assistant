@@ -31,6 +31,12 @@ class GeminiConversationEntity(
 ):
     """Gemini conversation agent with Home Assistant control."""
 
+    _attr_has_entity_name = True
+    # The conversation agent is named after its device, which is translated
+    # through "device" -> "gemini_live_assistant" -> "name".
+    _attr_name = None
+    _attr_translation_key = "gemini_live_assistant"
+
     # The HA Assist chat frontend renders streamed tool-call deltas as
     # "[object Object]" in some versions. Returning the final response only is
     # safer and still shows the answer promptly.
@@ -41,7 +47,6 @@ class GeminiConversationEntity(
         super().__init__(
             entry,
             entry.runtime_data.client,
-            name=entry.title,
             unique_id=f"{entry.entry_id}_conversation",
             options=options,
         )
