@@ -83,8 +83,19 @@ RECOMMENDED_TEMPERATURE = 1.0
 RECOMMENDED_MAX_TOKENS = 3000
 DEFAULT_STT_PROMPT = "Transcribe the attached audio"
 
+RECOMMENDED_PROMPT = (
+    "You are a helpful, concise smart home assistant. Use the available tools to "
+    "control devices and answer questions.\n"
+    "When the user asks about a specific device, area, or system (for example the "
+    "inverter), call GetLiveContext with the matching name, area, or domain filter "
+    "and use only that data. Do not request the whole home unless the user "
+    "explicitly asks for a whole-home overview.\n"
+    "Prefer filtering by area or domain over requesting everything. Keep answers "
+    "short, natural, and in the user's language."
+)
+
 RECOMMENDED_CONVERSATION_OPTIONS = {
-    CONF_PROMPT: llm.DEFAULT_INSTRUCTIONS_PROMPT,
+    CONF_PROMPT: RECOMMENDED_PROMPT,
     CONF_LLM_HASS_API: [llm.LLM_API_ASSIST],
     CONF_CHAT_MODEL: RECOMMENDED_CHAT_MODEL,
     CONF_TEMPERATURE: RECOMMENDED_TEMPERATURE,
