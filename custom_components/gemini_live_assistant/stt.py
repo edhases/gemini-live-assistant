@@ -55,8 +55,11 @@ class GeminiSTTEntity(stt.SpeechToTextEntity):
         self.entry = entry
         self._client = entry.runtime_data.client
         self._attr_unique_id = f"{entry.entry_id}_stt"
-        options = {**entry.data, **entry.options}
-        self._model = options.get(CONF_STT_MODEL, RECOMMENDED_STT_MODEL)
+
+    @property
+    def _model(self) -> str:
+        options = {**self.entry.data, **self.entry.options}
+        return options.get(CONF_STT_MODEL, RECOMMENDED_STT_MODEL)
 
     @property
     def supported_languages(self) -> list[str] | Literal["*"]:

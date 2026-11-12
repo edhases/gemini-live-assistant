@@ -55,9 +55,16 @@ class GeminiTTSEntity(tts.TextToSpeechEntity):
         self.entry = entry
         self._client = entry.runtime_data.client
         self._attr_unique_id = f"{entry.entry_id}_tts"
-        options = {**entry.data, **entry.options}
-        self._model = options.get(CONF_TTS_MODEL, RECOMMENDED_TTS_MODEL)
-        self._voice = options.get(CONF_TTS_VOICE, "Puck")
+
+    @property
+    def _model(self) -> str:
+        options = {**self.entry.data, **self.entry.options}
+        return options.get(CONF_TTS_MODEL, RECOMMENDED_TTS_MODEL)
+
+    @property
+    def _voice(self) -> str:
+        options = {**self.entry.data, **self.entry.options}
+        return options.get(CONF_TTS_VOICE, "Puck")
 
     @property
     def default_language(self) -> str:
