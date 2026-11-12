@@ -25,7 +25,7 @@ GeminiConfigEntry = ConfigEntry[GeminiRuntimeData]
 
 async def async_setup_entry(hass: HomeAssistant, entry: GeminiConfigEntry) -> bool:
     """Set up Gemini Live Assistant from a config entry."""
-    client = Client(api_key=entry.data[CONF_API_KEY])
+    client = await hass.async_add_executor_job(lambda: Client(api_key=entry.data[CONF_API_KEY]))
     entry.runtime_data = GeminiRuntimeData(client=client)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True

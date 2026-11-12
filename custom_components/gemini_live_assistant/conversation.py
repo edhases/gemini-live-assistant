@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 from typing import Literal
 
 from homeassistant.components import conversation
@@ -10,7 +11,7 @@ from homeassistant.const import CONF_LLM_HASS_API, CONF_PROMPT, MATCH_ALL
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN
+from .const import DOMAIN, LOGGER
 from .entity import GeminiLLMBaseEntity
 
 
@@ -30,7 +31,10 @@ class GeminiConversationEntity(
 ):
     """Gemini conversation agent with Home Assistant control."""
 
-    _attr_supports_streaming = True
+    # The HA Assist chat frontend renders streamed tool-call deltas as
+    # "[object Object]" in some versions. Returning the final response only is
+    # safer and still shows the answer promptly.
+    _attr_supports_streaming = False
 
     def __init__(self, entry: ConfigEntry) -> None:
         options = {**entry.data, **entry.options}
@@ -73,4 +77,18 @@ class GeminiConversationEntity(
             return err.as_conversation_result()
 
         await self._async_handle_chat_log(chat_log)
+
+        # Defensive: the frontend expects a plain string as the assistant
+        # speech. Coerce non-string content so it never renders as
+        # "[object Object]".
+        if chat_log.content:
+            last = chat_log.content[-1]
+            if (
+                isinstance(last, conversation.AssistantContent)
+                and last.content is not None
+                and not isinstance(last.content, str)
+            ):
+                LOGGER.warning("Gemini returned non-string assistant content: %r", last.content)
+                chat_log.content[-1] = dataclasses.replace(last, content=str(last.content))
+
         return conversation.async_get_result_from_chat_log(user_input, chat_log)
