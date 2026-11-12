@@ -44,17 +44,43 @@ from .const import (
     RECOMMENDED_STT_MODEL,
     RECOMMENDED_TEMPERATURE,
     RECOMMENDED_TTS_MODEL,
+    STT_MODELS,
     TTS_MODELS,
     VOICES,
 )
 
 _LOGGER = logging.getLogger(__name__)
 
+_CHAT_EXCLUDE = (
+    "image",
+    "tts",
+    "transcribe",
+    "robotics",
+    "lyria",
+    "computer-use",
+    "antigravity",
+    "deep-research",
+    "embedding",
+    "nano-banana",
+    "gemma",
+)
 
-def _model_selector(models: list[str]) -> SelectSelector:
+
+def _unique_models(*groups: list[str], current: str | None = None) -> list[str]:
+    options: list[str] = []
+    for group in groups:
+        for model in group:
+            if model and model not in options:
+                options.append(model)
+    if current and current not in options:
+        options.insert(0, current)
+    return sorted(options)
+
+
+def _model_selector(models: list[str], current: str | None = None) -> SelectSelector:
     return SelectSelector(
         SelectSelectorConfig(
-            options=[SelectOptionDict(value=m, label=m.split("/")[-1]) for m in models],
+            options=_unique_models(models, current=current),
             mode=SelectSelectorMode.DROPDOWN,
             custom_value=True,
         )
@@ -62,7 +88,35 @@ def _model_selector(models: list[str]) -> SelectSelector:
 
 
 def _voice_selector() -> SelectSelector:
-    return SelectSelector(SelectSelectorConfig(options=VOICES, mode=SelectSelectorMode.DROPDOWN))
+    return SelectSelector(
+        SelectSelectorConfig(
+            options=VOICES,
+            mode=SelectSelectorMode.DROPDOWN,
+            custom_value=True,
+        )
+    )
+
+
+def _list_models(
+    client: Client,
+    *,
+    action: str | None = None,
+    include: tuple[str, ...] = (),
+    exclude: tuple[str, ...] = (),
+) -> list[str]:
+    names: list[str] = []
+    for model in client.models.list(config={"page_size": 500}):
+        name = model.name or ""
+        actions = model.supported_actions or []
+        if action and action not in actions:
+            continue
+        lowered = name.lower()
+        if include and not any(token in lowered for token in include):
+            continue
+        if any(token in lowered for token in exclude):
+            continue
+        names.append(name)
+    return sorted(names)
 
 
 class GeminiLiveAssistantConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -117,22 +171,60 @@ class GeminiLiveAssistantConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 class GeminiLiveAssistantOptionsFlow(config_entries.OptionsFlow):
     """Options for the Gemini conversation agent."""
 
+    async def _async_model_lists(self, options: dict[str, Any]) -> dict[str, list[str]]:
+        chat = list(CHAT_MODELS)
+        stt = list(STT_MODELS)
+        tts = list(TTS_MODELS)
+        live = list(LIVE_MODELS)
+        api_key = options.get(CONF_API_KEY)
+        if api_key:
+            client = Client(api_key=api_key)
+            try:
+                fetched_chat = await self.hass.async_add_executor_job(
+                    lambda: _list_models(client, action="generateContent", exclude=_CHAT_EXCLUDE)
+                )
+                fetched_live = await self.hass.async_add_executor_job(
+                    lambda: _list_models(client, action="bidiGenerateContent")
+                )
+                fetched_tts = await self.hass.async_add_executor_job(
+                    lambda: _list_models(client, action="generateContent", include=("tts",))
+                )
+                fetched_stt = await self.hass.async_add_executor_job(
+                    lambda: _list_models(client, action="generateContent", include=("transcribe",))
+                )
+            except Exception as err:
+                _LOGGER.warning("Could not fetch Gemini model list: %s", err)
+            else:
+                chat = _unique_models(fetched_chat, chat)
+                live = _unique_models(fetched_live, live)
+                tts = _unique_models(fetched_tts, tts)
+                stt = _unique_models(fetched_stt, stt)
+        return {"chat": chat, "stt": stt, "tts": tts, "live": live}
+
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
 
         options = {**self.config_entry.data, **self.config_entry.options}
+        models = await self._async_model_lists(options)
+
         llm_apis = [
             SelectOptionDict(value=api.id, label=api.name) for api in llm.async_get_apis(self.hass)
         ]
+        if not llm_apis:
+            llm_apis = [SelectOptionDict(value=llm.LLM_API_ASSIST, label="Assist")]
+        known_api_ids = {option["value"] for option in llm_apis}
         selected_apis = options.get(CONF_LLM_HASS_API) or [llm.LLM_API_ASSIST]
+        if isinstance(selected_apis, str):
+            selected_apis = [selected_apis]
+        selected_apis = [api for api in selected_apis if api in known_api_ids]
 
         schema = vol.Schema(
             {
                 vol.Optional(
                     CONF_CHAT_MODEL,
                     default=options.get(CONF_CHAT_MODEL, RECOMMENDED_CHAT_MODEL),
-                ): _model_selector(CHAT_MODELS),
+                ): _model_selector(models["chat"], options.get(CONF_CHAT_MODEL)),
                 vol.Optional(
                     CONF_PROMPT,
                     default=options.get(CONF_PROMPT, llm.DEFAULT_INSTRUCTIONS_PROMPT),
@@ -162,7 +254,7 @@ class GeminiLiveAssistantOptionsFlow(config_entries.OptionsFlow):
                 vol.Optional(
                     CONF_LIVE_MODEL,
                     default=options.get(CONF_LIVE_MODEL, RECOMMENDED_LIVE_MODEL),
-                ): _model_selector(LIVE_MODELS),
+                ): _model_selector(models["live"], options.get(CONF_LIVE_MODEL)),
                 vol.Optional(
                     CONF_LIVE_VOICE,
                     default=options.get(CONF_LIVE_VOICE, "Puck"),
@@ -170,11 +262,11 @@ class GeminiLiveAssistantOptionsFlow(config_entries.OptionsFlow):
                 vol.Optional(
                     CONF_STT_MODEL,
                     default=options.get(CONF_STT_MODEL, RECOMMENDED_STT_MODEL),
-                ): _model_selector(CHAT_MODELS),
+                ): _model_selector(models["stt"], options.get(CONF_STT_MODEL)),
                 vol.Optional(
                     CONF_TTS_MODEL,
                     default=options.get(CONF_TTS_MODEL, RECOMMENDED_TTS_MODEL),
-                ): _model_selector(TTS_MODELS),
+                ): _model_selector(models["tts"], options.get(CONF_TTS_MODEL)),
                 vol.Optional(
                     CONF_TTS_VOICE,
                     default=options.get(CONF_TTS_VOICE, "Puck"),

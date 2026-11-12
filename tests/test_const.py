@@ -13,6 +13,7 @@ from custom_components.gemini_live_assistant import const
     ("models", "name"),
     [
         (const.CHAT_MODELS, "CHAT_MODELS"),
+        (const.STT_MODELS, "STT_MODELS"),
         (const.TTS_MODELS, "TTS_MODELS"),
         (const.LIVE_MODELS, "LIVE_MODELS"),
     ],
@@ -33,7 +34,7 @@ def test_voices_are_not_empty() -> None:
     ("recommended", "models"),
     [
         (const.RECOMMENDED_CHAT_MODEL, const.CHAT_MODELS),
-        (const.RECOMMENDED_STT_MODEL, const.CHAT_MODELS),
+        (const.RECOMMENDED_STT_MODEL, const.STT_MODELS),
         (const.RECOMMENDED_TTS_MODEL, const.TTS_MODELS),
         (const.RECOMMENDED_LIVE_MODEL, const.LIVE_MODELS),
     ],

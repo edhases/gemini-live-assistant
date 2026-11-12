@@ -24,24 +24,46 @@ CONF_LIVE_MODEL = "live_model"
 CONF_LIVE_VOICE = "live_voice"
 
 # Text model used for the conversation agent and for audio transcription.
-RECOMMENDED_CHAT_MODEL = "models/gemini-3.1-flash-lite"
-RECOMMENDED_STT_MODEL = "models/gemini-3.1-flash-lite"
-RECOMMENDED_TTS_MODEL = "models/gemini-3.1-flash-tts-preview"
-RECOMMENDED_LIVE_MODEL = "models/gemini-3.1-flash-live-preview"
+RECOMMENDED_CHAT_MODEL = "models/gemini-3.8-flash"
+RECOMMENDED_STT_MODEL = "models/gemini-3.5-transcribe"
+RECOMMENDED_TTS_MODEL = "models/gemini-3.8-flash-tts"
+RECOMMENDED_LIVE_MODEL = "models/gemini-3.8-live"
 
+# Curated fallbacks. The options flow also queries the live model list from
+# the Gemini API and always allows typing a custom model name.
 CHAT_MODELS = [
+    "models/gemini-3.8-flash",
+    "models/gemini-3.7-flash",
+    "models/gemini-3.6-flash",
+    "models/gemini-3.5-flash",
+    "models/gemini-3.5-flash-lite",
     "models/gemini-3.1-flash-lite",
-    "models/gemini-3.1-flash",
+    "models/gemini-3.1-pro-preview",
     "models/gemini-2.5-flash",
     "models/gemini-2.5-pro",
+    "models/gemini-4-argon",
+    "models/gemini-4-carbon",
+    "models/gemini-flash-latest",
+    "models/gemini-pro-latest",
+]
+
+STT_MODELS = [
+    "models/gemini-3.5-transcribe",
+    "models/gemini-3.8-flash",
+    "models/gemini-3.1-flash-lite",
+    "models/gemini-2.5-flash",
 ]
 
 TTS_MODELS = [
+    "models/gemini-3.8-flash-tts",
+    "models/gemini-3.8-flash-lite-tts",
     "models/gemini-3.1-flash-tts-preview",
     "models/gemini-2.5-flash-preview-tts",
 ]
 
 LIVE_MODELS = [
+    "models/gemini-3.8-live",
+    "models/gemini-3.8-live-extended-thinking",
     "models/gemini-3.1-flash-live-preview",
     "models/gemini-2.5-flash-native-audio-preview-12-2025",
 ]
