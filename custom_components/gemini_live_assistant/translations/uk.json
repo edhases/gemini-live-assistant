@@ -1,0 +1,58 @@
+{
+  "title": "Gemini Live Assistant",
+  "config": {
+    "step": {
+      "user": {
+        "title": "API-ключ Gemini",
+        "description": "Створіть API-ключ на https://aistudio.google.com/apikey і вставте його нижче.",
+        "data": {
+          "api_key": "API-ключ"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Невірний API-ключ.",
+      "cannot_connect": "Не вдалося зв'язатися з Gemini API.",
+      "unknown": "Непередбачена помилка."
+    },
+    "abort": {
+      "already_configured": "Цей API-ключ уже налаштовано."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Налаштування асистента Gemini",
+        "description": "Налаштуйте модель діалогу, керування Home Assistant та голос.",
+        "data": {
+          "chat_model": "Модель діалогу",
+          "prompt": "Системний промпт",
+          "llm_hass_api": "API керування Home Assistant",
+          "temperature": "Температура",
+          "max_tokens": "Максимум токенів відповіді",
+          "enable_live": "Увімкнути модуль Gemini Live",
+          "live_model": "Модель Live",
+          "live_voice": "Голос Live",
+          "stt_model": "Модель розпізнавання мовлення",
+          "tts_model": "Модель синтезу мовлення",
+          "tts_voice": "Голос TTS"
+        },
+        "data_description": {
+          "llm_hass_api": "Надати Gemini інструменти Assist, щоб він міг керувати пристроями.",
+          "enable_live": "Підготувати модуль Gemini Live для власного голосового конвеєра."
+        }
+      }
+    }
+  },
+  "entity": {
+    "conversation": {
+      "gemini_live_assistant": { "name": "Gemini Live Assistant" }
+    },
+    "stt": {
+      "gemini_live_assistant": { "name": "Gemini STT" }
+    },
+    "tts": {
+      "gemini_live_assistant": { "name": "Gemini TTS" }
+    }
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "title": "Gemini Live Assistant",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Gemini API key",
+        "description": "Create an API key at https://aistudio.google.com/apikey and paste it below.",
+        "data": {
+          "api_key": "API key"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid API key.",
+      "cannot_connect": "Could not reach the Gemini API.",
+      "unknown": "Unexpected error."
+    },
+    "abort": {
+      "already_configured": "This API key is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Gemini assistant options",
+        "description": "Configure the conversation model, Home Assistant control and voice.",
+        "data": {
+          "chat_model": "Chat model",
+          "prompt": "System prompt",
+          "llm_hass_api": "Home Assistant control APIs",
+          "temperature": "Temperature",
+          "max_tokens": "Maximum output tokens",
+          "enable_live": "Enable Gemini Live module",
+          "live_model": "Live model",
+          "live_voice": "Live voice",
+          "stt_model": "Speech-to-text model",
+          "tts_model": "Text-to-speech model",
+          "tts_voice": "TTS voice"
+        },
+        "data_description": {
+          "llm_hass_api": "Expose Home Assistant tools (Assist) so Gemini can control devices.",
+          "enable_live": "Prepare the Gemini Live realtime module (used by a custom voice pipeline)."
+        }
+      }
+    }
+  },
+  "entity": {
+    "conversation": {
+      "gemini_live_assistant": { "name": "Gemini Live Assistant" }
+    },
+    "stt": {
+      "gemini_live_assistant": { "name": "Gemini STT" }
+    },
+    "tts": {
+      "gemini_live_assistant": { "name": "Gemini TTS" }
+    }
+  }
+}

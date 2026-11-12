@@ -1,0 +1,14 @@
+{
+  "domain": "gemini_live_assistant",
+  "name": "Gemini Live Assistant",
+  "codeowners": ["@edhases"],
+  "config_flow": true,
+  "after_dependencies": ["assist_pipeline", "intent"],
+  "dependencies": ["conversation"],
+  "documentation": "https://github.com/edhases/gemini-live-assistant",
+  "issue_tracker": "https://github.com/edhases/gemini-live-assistant/issues",
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "requirements": ["google-genai==2.25.0"],
+  "version": "0.1.0"
+}
